@@ -4,3 +4,6 @@
 [submodule "lib/WrapperFreeRTOS"]
 	path = lib/WrapperFreeRTOS
 	url = https://github.com/alexCajas/WrapperFreeRTOS.git
+[submodule "lib/pubsubclient"]
+	path = lib/pubsubclient
+	url = https://github.com/knolleary/pubsubclient.git
