@@ -7,3 +7,6 @@
 [submodule "lib/pubsubclient"]
 	path = lib/pubsubclient
 	url = https://github.com/knolleary/pubsubclient.git
+[submodule "lib/arduinoWebSockets"]
+	path = lib/arduinoWebSockets
+	url = https://github.com/Links2004/arduinoWebSockets.git
