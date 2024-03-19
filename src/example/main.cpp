@@ -18,7 +18,6 @@ const char *ssid = WIFI_SSID;
 const char *password = WIFI_PASSWORD;
 
 #define PROXY_DEST "127.0.0.1"
-#define PROXY_PORT 8884
 #define TOWS_SIZE 256
 ProxyWebSocketsServer *webSocket; 
 
@@ -122,7 +121,7 @@ void setup() {
     clientMqtt.setBufferSize(255);
 
     // clientMqtt.setCallback(callback);
-    webSocket = new ProxyWebSocketsServer(8883,PROXY_DEST, PROXY_PORT);
+    webSocket = new ProxyWebSocketsServer(8883, PROXY_DEST, mqttPort);
 }
 uint32_t last;
 #define INTERVAL 1000
