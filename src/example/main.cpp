@@ -7,23 +7,32 @@
  * @version 1.0.0
  */
 
+#include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <ProxyWebSocketsServer.h>
 
 #include "EmbeddedMqttBroker.h"
 using namespace mqttBrokerName;
 const char *ssid = WIFI_SSID;
 const char *password = WIFI_PASSWORD;
 
+#define PROXY_DEST "127.0.0.1"
+#define PROXY_PORT 8884
+#define TOWS_SIZE 256
+ProxyWebSocketsServer *webSocket; 
 
 /******************* mqtt broker ********************/
-uint16_t mqttPort = 1883;
+uint16_t mqttPort = 8884;
 MqttBroker broker(mqttPort);
 WiFiClient espClient;
 
 PubSubClient clientMqtt(espClient);
 
 void callback(char *topic, byte *payload, unsigned int length);
+// void webSocketEvent(WSclient_t *client,uint8_t num, WStype_t type, uint8_t * payload, size_t length);
+void wifi_event_cb(WiFiEvent_t event, WiFiEventInfo_t info);
+void wifiScan(void);
 
 void reconnect() {
     // Loop until we're reconnected
@@ -46,6 +55,20 @@ void reconnect() {
     }
 }
 
+void hexdump(const void *mem, uint32_t len, uint8_t cols) {
+    const uint8_t* src = (const uint8_t*) mem;
+    Serial.printf("\n[HEXDUMP] Address: 0x%08X len: 0x%X (%d)", (ptrdiff_t)src, len, len);
+    for(uint32_t i = 0; i < len; i++) {
+        if(i % cols == 0) {
+            Serial.printf("\n[0x%08X] 0x%08X: ", (ptrdiff_t)src, i);
+        }
+        Serial.printf("%02X ", *src);
+        src++;
+    }
+    Serial.printf("\n");
+}
+
+
 void setup() {
 
     /**
@@ -63,12 +86,18 @@ void setup() {
     Serial.print("Connecting to ");
     Serial.println(ssid);
 
+    WiFi.useStaticBuffers(true);
     WiFi.mode(WIFI_STA);
+    // WiFi.disconnect();
+    delay(100);
+    // wifiScan();
+    // WiFi.enableProv(true);
+    WiFi.onEvent(wifi_event_cb);
 
     WiFi.begin(ssid, password);
     while (WiFi.status() != WL_CONNECTED) {
         WiFi.begin(ssid, password);
-        delay(500);
+        delay(1000);
         Serial.print(".");
     }
 
@@ -92,21 +121,31 @@ void setup() {
     clientMqtt.setServer(ip, mqttPort);
     clientMqtt.setBufferSize(255);
 
-    clientMqtt.setCallback(callback);
+    // clientMqtt.setCallback(callback);
+    webSocket = new ProxyWebSocketsServer(8883,PROXY_DEST, PROXY_PORT);
 }
+uint32_t last;
+#define INTERVAL 1000
 
 void loop() {
     if (!clientMqtt.connected()) {
         reconnect();
     }
     clientMqtt.loop();
-}
+    if (webSocket)
+        webSocket->loop();
 
-
-void callback(char *topic, byte *payload, unsigned int length) {
-    Serial.printf("message  [%s] %u ", topic, length);
-    for (int i = 0; i < length; i++) {
-        Serial.print((char)payload[i]);
+    if (millis() - last > INTERVAL) {
+        last = millis();
+        clientMqtt.publish("blah", "fasel");
     }
-    Serial.println();
 }
+
+
+// void callback(char *topic, byte *payload, unsigned int length) {
+//     Serial.printf("message  [%s] %u ", topic, length);
+//     for (int i = 0; i < length; i++) {
+//         Serial.print((char)payload[i]);
+//     }
+//     Serial.println();
+// }
